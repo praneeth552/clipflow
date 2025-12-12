@@ -10,6 +10,12 @@ Windows users have `Win + V` for clipboard history since 2018. Mac users? Nothin
 ![Swift](https://img.shields.io/badge/swift-native-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+## 📸 Screenshots
+
+| Popup UI | Menu Bar |
+|----------|----------|
+| ![ClipFlow Popup](screenshots/clipflow-popup.png) | ![ClipFlow Menu Bar](screenshots/clipflow-menubar.png) |
+
 ---
 
 ## 📥 Installation
