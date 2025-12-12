@@ -112,13 +112,29 @@ build/
 
 ---
 
-## 🔐 Privacy
+## 🔐 Privacy & Security
 
-ClipFlow runs **100% locally**:
-- ✅ No network connections
-- ✅ No analytics or tracking
-- ✅ No cloud sync
-- ✅ All data stays on your Mac
+**ClipFlow is 100% transparent and trustworthy:**
+
+| Privacy Feature | Status |
+|-----------------|--------|
+| Open Source | ✅ All code visible on GitHub |
+| Network Access | ✅ Zero internet connections, ever |
+| Analytics | ✅ No tracking, no telemetry |
+| Data Storage | ✅ Local only - never leaves your Mac |
+| Persistence | ✅ History clears when app quits |
+
+### Why the "unidentified developer" warning?
+
+Apple's notarization requires a $99/year Developer account. ClipFlow is **free and open source**, so we don't pay this fee.
+
+**The warning does NOT mean the app is dangerous.** You can:
+- 📖 **Verify the code** yourself - it's all on GitHub
+- 🔨 **Build from source** if you prefer: `./build.sh`
+- ✅ **Right-click → Open** to bypass the warning (one-time)
+
+> 💡 Many popular open source Mac apps (like Rectangle, MonitorControl, etc.) 
+> also show this warning. It's normal for indie/open source software!
 
 ---
 
