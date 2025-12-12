@@ -28,12 +28,16 @@ swiftc -O -o "$APP_BUNDLE/Contents/MacOS/$APP_NAME" \
     -framework AppKit \
     -framework Carbon
 
-# Copy icon to Resources
+# Copy app icon (for Finder/Dock)
+if [ -f "AppIcon.icns" ]; then
+    cp AppIcon.icns "$APP_BUNDLE/Contents/Resources/"
+    echo "✅ App icon copied (icns)"
+fi
+
+# Copy menu bar icon
 if [ -f "icon.png" ]; then
-    cp icon.png "$APP_BUNDLE/Contents/Resources/"
-    # Also copy to MacOS for menu bar icon
     cp icon.png "$APP_BUNDLE/Contents/MacOS/"
-    echo "✅ Icon copied"
+    echo "✅ Menu bar icon copied (png)"
 fi
 
 # Create Info.plist

@@ -4,9 +4,9 @@
 <dict>
 	<key>files</key>
 	<dict>
-		<key>Resources/icon.png</key>
+		<key>Resources/AppIcon.icns</key>
 		<data>
-		YR5eCp8Jap8RWCAhylDJUSA7lY4=
+		FoEffarzPlvwtCyGVgOcucfc/wk=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -20,11 +20,11 @@
 			<key>requirement</key>
 			<string>cdhash H"ed75b48bf6128eb945fadac2a54c258001c02a70"</string>
 		</dict>
-		<key>Resources/icon.png</key>
+		<key>Resources/AppIcon.icns</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			SeUi6xFBEECl323JoyXy9dFJ8mRj4vJLACDHhPmDiTI=
+			pGonXLK3TKRzJCawgLlLM9c0CdaEVaK/aCw1AFepI2k=
 			</data>
 		</dict>
 	</dict>
