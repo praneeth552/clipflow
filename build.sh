@@ -6,7 +6,7 @@
 set -e
 
 APP_NAME="ClipFlow"
-VERSION="1.0.0"
+VERSION="1.0.1"
 BUILD_DIR="build"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 
