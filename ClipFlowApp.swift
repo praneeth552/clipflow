@@ -282,6 +282,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         
         let item = historyManager.items[currentIndex]
         
+        // Promote selected item to the front of history (recently used first)
+        historyManager.promoteToRecent(index: currentIndex)
+        
         // Set clipboard based on type
         NSPasteboard.general.clearContents()
         
@@ -381,6 +384,14 @@ class ClipboardHistoryManager {
         if items.count > maxItems {
             items = Array(items.prefix(maxItems))
         }
+    }
+    
+    /// Promotes the item at the given index to the front of the list.
+    /// This implements "recently used" behavior - the last pasted item appears first.
+    func promoteToRecent(index: Int) {
+        guard index > 0 && index < items.count else { return }
+        let item = items.remove(at: index)
+        items.insert(item, at: 0)
     }
 }
 
