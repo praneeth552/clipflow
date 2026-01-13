@@ -180,6 +180,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 case 53: // Escape
                     DispatchQueue.main.async { self.cancelNavigation() }
                     return nil // Consume
+                case 51: // Delete/Backspace - delete current item if Cmd+Shift held
+                    if flags.contains([.maskCommand, .maskShift]) {
+                        DispatchQueue.main.async { self.deleteCurrentItem() }
+                        return nil // Consume
+                    }
                 default:
                     break
                 }
@@ -318,6 +323,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         print("❌ Cancelled")
     }
     
+    func deleteCurrentItem() {
+        guard isNavigating, currentIndex < historyManager.items.count else { return }
+        
+        print("🗑️ Deleting item at index \(currentIndex)")
+        
+        // Show delete animation first
+        overlayWindow?.showDeleteAnimation { [weak self] in
+            guard let self = self else { return }
+            
+            // Remove item from history
+            self.historyManager.delete(at: self.currentIndex)
+            
+            // Handle empty history
+            if self.historyManager.items.isEmpty {
+                self.isNavigating = false
+                self.overlayWindow?.hide()
+                print("📋 History is now empty")
+                return
+            }
+            
+            // Adjust index if needed (if we deleted the last item)
+            if self.currentIndex >= self.historyManager.items.count {
+                self.currentIndex = self.historyManager.items.count - 1
+            }
+            
+            // Show next item with animation
+            self.overlayWindow?.showAfterDelete(
+                item: self.historyManager.items[self.currentIndex],
+                position: self.currentIndex + 1,
+                total: self.historyManager.items.count
+            )
+            
+            print("   Now showing [\(self.currentIndex + 1)/\(self.historyManager.items.count)]")
+        }
+    }
+    
     func simulatePaste() {
         // Simulate Cmd+V using CGEvent
         let source = CGEventSource(stateID: .hidSystemState)
@@ -393,6 +434,15 @@ class ClipboardHistoryManager {
         let item = items.remove(at: index)
         items.insert(item, at: 0)
     }
+    
+    /// Deletes the item at the given index.
+    /// Returns true if successful, false if index is out of bounds.
+    @discardableResult
+    func delete(at index: Int) -> Bool {
+        guard index >= 0 && index < items.count else { return false }
+        items.remove(at: index)
+        return true
+    }
 }
 
 // MARK: - Overlay Window
@@ -406,12 +456,12 @@ class OverlayWindow {
     var hintLabel: NSTextField?
     var separator: NSBox?
     
-    let minWidth: CGFloat = 400
-    let maxWidth: CGFloat = 550
-    let headerHeight: CGFloat = 45
-    let footerHeight: CGFloat = 35
-    let padding: CGFloat = 18
-    let imageSize: CGFloat = 100
+    let minWidth: CGFloat = 420
+    let maxWidth: CGFloat = 520
+    let headerHeight: CGFloat = 48
+    let footerHeight: CGFloat = 38
+    let padding: CGFloat = 20
+    let imageSize: CGFloat = 110
     
     init() {
         setupPanel()
@@ -438,36 +488,38 @@ class OverlayWindow {
         panel.isOpaque = false
         panel.hasShadow = true
         
-        // Create background with blur effect
+        // Create background with refined blur effect
         bgView = NSVisualEffectView(frame: panel.frame)
         bgView?.material = .hudWindow
         bgView?.blendingMode = .behindWindow
         bgView?.state = .active
         bgView?.wantsLayer = true
-        bgView?.layer?.cornerRadius = 14
+        bgView?.layer?.cornerRadius = 16
         bgView?.layer?.masksToBounds = true
-        bgView?.layer?.backgroundColor = NSColor(red: 0.08, green: 0.08, blue: 0.12, alpha: 0.90).cgColor
+        // Softer, warmer dark background - easier on eyes
+        bgView?.layer?.backgroundColor = NSColor(red: 0.10, green: 0.10, blue: 0.13, alpha: 0.92).cgColor
         bgView?.layer?.borderWidth = 0.5
-        bgView?.layer?.borderColor = NSColor(white: 0.3, alpha: 0.5).cgColor
+        bgView?.layer?.borderColor = NSColor(white: 0.25, alpha: 0.4).cgColor
         panel.contentView = bgView
         
-        // Title
-        titleLabel = NSTextField(labelWithString: "📋  ClipFlow")
-        titleLabel?.font = NSFont.systemFont(ofSize: 16, weight: .semibold)
-        titleLabel?.textColor = NSColor(red: 0.54, green: 0.71, blue: 0.98, alpha: 1.0)
+        // Title - refined typography
+        titleLabel = NSTextField(labelWithString: "ClipFlow")
+        titleLabel?.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
+        // Softer blue accent - easier on eyes
+        titleLabel?.textColor = NSColor(red: 0.55, green: 0.68, blue: 0.90, alpha: 1.0)
         bgView?.addSubview(titleLabel!)
         
-        // Position label
+        // Position label - monospaced for clean alignment
         positionLabel = NSTextField(labelWithString: "1 / 1")
-        positionLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
-        positionLabel?.textColor = NSColor(red: 0.6, green: 0.6, blue: 0.7, alpha: 1.0)
+        positionLabel?.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+        positionLabel?.textColor = NSColor(red: 0.55, green: 0.55, blue: 0.62, alpha: 1.0)
         positionLabel?.alignment = .right
         bgView?.addSubview(positionLabel!)
         
-        // Separator
+        // Separator - subtle divider
         separator = NSBox()
         separator?.boxType = .separator
-        separator?.alphaValue = 0.25
+        separator?.alphaValue = 0.15
         bgView?.addSubview(separator!)
         
         // Image view (for image previews)
@@ -481,20 +533,21 @@ class OverlayWindow {
         imageView?.isHidden = true
         bgView?.addSubview(imageView!)
         
-        // Content label
+        // Content label - optimized for readability
         contentLabel = NSTextField(labelWithString: "")
         contentLabel?.font = NSFont.systemFont(ofSize: 14, weight: .regular)
-        contentLabel?.textColor = NSColor.white
+        // Slightly off-white for reduced eye strain
+        contentLabel?.textColor = NSColor(white: 0.92, alpha: 1.0)
         contentLabel?.lineBreakMode = .byWordWrapping
-        contentLabel?.maximumNumberOfLines = 5
+        contentLabel?.maximumNumberOfLines = 6
         contentLabel?.cell?.wraps = true
         contentLabel?.cell?.truncatesLastVisibleLine = true
         bgView?.addSubview(contentLabel!)
         
-        // Hint label
-        hintLabel = NSTextField(labelWithString: "↑↓ Navigate   •   Enter/Release Paste   •   Esc Cancel")
+        // Hint label - subtle guidance
+        hintLabel = NSTextField(labelWithString: "  ↑↓ Navigate   ·   ⏎ Paste   ·   ⌘⇧⌫ Delete   ·   Esc Cancel  ")
         hintLabel?.font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        hintLabel?.textColor = NSColor(red: 0.5, green: 0.5, blue: 0.6, alpha: 1.0)
+        hintLabel?.textColor = NSColor(red: 0.45, green: 0.45, blue: 0.52, alpha: 1.0)
         hintLabel?.alignment = .center
         bgView?.addSubview(hintLabel!)
     }
@@ -570,7 +623,7 @@ class OverlayWindow {
         // Panel size and gap
         let panelWidth = newSize.width
         let panelHeight = newSize.height
-        let gap: CGFloat = 8.0
+        let gap: CGFloat = 5.0
 
         // Get global mouse location (origin = bottom-left of main display)
         let mouseLocation = NSEvent.mouseLocation
@@ -582,13 +635,13 @@ class OverlayWindow {
 
         let screenFrame = screenContainingMouse.frame
 
-        // Default: place panel centered horizontally under the cursor
+        // Default: place panel centered horizontally ABOVE the cursor
         var originX = mouseLocation.x - (panelWidth / 2)
-        var originY = mouseLocation.y - panelHeight - gap // below cursor
+        var originY = mouseLocation.y + gap // above cursor (preferred)
 
-        // If not enough space below the cursor, flip above the cursor
-        if originY < screenFrame.minY + gap {
-            originY = mouseLocation.y + gap // above cursor
+        // If not enough space above the cursor, flip below the cursor
+        if originY + panelHeight > screenFrame.maxY - gap {
+            originY = mouseLocation.y - panelHeight - gap // below cursor
         }
 
         // Horizontal clamping so panel stays fully on screen
@@ -620,34 +673,34 @@ class OverlayWindow {
         let newSize = calculateSize(for: item)
         let currentFrame = panel.frame
         
-        // Animate content fade out, resize, then fade in
+        // Calculate new frame (keep centered at same position)
+        let newFrame = NSRect(
+            x: currentFrame.origin.x + (currentFrame.width - newSize.width) / 2,
+            y: currentFrame.origin.y + (currentFrame.height - newSize.height) / 2,
+            width: newSize.width,
+            height: newSize.height
+        )
+        
+        // Step 1: Fade out content
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.15
+            context.duration = 0.12
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             contentLabel?.animator().alphaValue = 0
             imageView?.animator().alphaValue = 0
         }) {
-            // Update content
+            // Step 2: Update content and resize panel
             self.updateContent(item: item, position: position, total: total)
             
-            // Animate resize (liquid glass effect)
             NSAnimationContext.runAnimationGroup({ context in
-                context.duration = 0.25
-                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.34, 1.56, 0.64, 1) // Spring
-                
-                let newFrame = NSRect(
-                    x: currentFrame.origin.x,
-                    y: currentFrame.origin.y + (currentFrame.height - newSize.height) / 2,
-                    width: newSize.width,
-                    height: newSize.height
-                )
+                context.duration = 0.2
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
                 panel.animator().setFrame(newFrame, display: true)
             }) {
+                // Step 3: Layout and fade in
                 self.layoutSubviews(for: newSize, isImage: item.isImage)
                 
-                // Fade content back in
                 NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = 0.15
+                    context.duration = 0.12
                     context.timingFunction = CAMediaTimingFunction(name: .easeOut)
                     self.contentLabel?.animator().alphaValue = 1.0
                     self.imageView?.animator().alphaValue = 1.0
@@ -684,6 +737,94 @@ class OverlayWindow {
             panel.orderOut(nil)
             panel.alphaValue = 1.0
         }
+    }
+    
+    /// Shows delete animation: content slides left while turning red
+    func showDeleteAnimation(completion: @escaping () -> Void) {
+        guard let bgView = bgView else {
+            completion()
+            return
+        }
+        
+        // Create a red overlay layer for the delete effect
+        let redOverlay = CALayer()
+        redOverlay.backgroundColor = NSColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 0.0).cgColor
+        redOverlay.frame = bgView.bounds
+        redOverlay.cornerRadius = 14
+        bgView.layer?.addSublayer(redOverlay)
+        
+        // Animate: slide left + fade to red + fade out
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.25
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            
+            // Slide content left
+            contentLabel?.animator().frame.origin.x -= 50
+            imageView?.animator().frame.origin.x -= 50
+            
+            // Fade out content
+            contentLabel?.animator().alphaValue = 0
+            imageView?.animator().alphaValue = 0
+        }) {
+            // Flash red briefly
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0.15)
+            redOverlay.backgroundColor = NSColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 0.3).cgColor
+            CATransaction.commit()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                // Fade red overlay out
+                CATransaction.begin()
+                CATransaction.setAnimationDuration(0.1)
+                redOverlay.backgroundColor = NSColor.clear.cgColor
+                CATransaction.setCompletionBlock {
+                    redOverlay.removeFromSuperlayer()
+                    completion()
+                }
+                CATransaction.commit()
+            }
+        }
+    }
+    
+    /// Shows new content after delete: slides in from right
+    func showAfterDelete(item: ClipboardItem, position: Int, total: Int) {
+        guard let panel = panel else { return }
+        
+        let newSize = calculateSize(for: item)
+        let currentFrame = panel.frame
+        
+        // Resize panel to fit new content (keep same position)
+        let newFrame = NSRect(
+            x: currentFrame.origin.x,
+            y: currentFrame.origin.y + (currentFrame.height - newSize.height) / 2,
+            width: newSize.width,
+            height: newSize.height
+        )
+        panel.setFrame(newFrame, display: true)
+        
+        // Update internal layout
+        layoutSubviews(for: newSize, isImage: item.isImage)
+        updateContent(item: item, position: position, total: total)
+        
+        // Start content off-screen to the right
+        let originalX = contentLabel?.frame.origin.x ?? 0
+        let originalImageX = imageView?.frame.origin.x ?? 0
+        
+        contentLabel?.frame.origin.x = originalX + 50
+        imageView?.frame.origin.x = originalImageX + 50
+        contentLabel?.alphaValue = 0
+        imageView?.alphaValue = 0
+        
+        // Animate: slide in from right
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            
+            contentLabel?.animator().frame.origin.x = originalX
+            imageView?.animator().frame.origin.x = originalImageX
+            contentLabel?.animator().alphaValue = 1.0
+            imageView?.animator().alphaValue = 1.0
+        })
     }
 }
 

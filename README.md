@@ -21,7 +21,7 @@ Windows users have `Win + V` for clipboard history since 2018. Mac users? Nothin
 ## 📥 Installation
 
 ### Option 1: Download DMG (Easiest)
-1. Download `ClipFlow-1.0.0.dmg` from [Releases](../../releases)
+1. Download `ClipFlow-1.0.2.dmg` from [Releases](../../releases)
 2. Open the DMG and drag `ClipFlow.app` to Applications
 3. Open ClipFlow and grant Accessibility permissions
 
@@ -75,6 +75,7 @@ ClipFlow needs Accessibility access for global hotkeys:
 | `↑` | Go to older item (like terminal) |
 | `↓` | Go to newer item |
 | `Enter` | Paste selected item |
+| `Cmd + Shift + Delete` | Delete current item |
 | `Esc` | Cancel |
 | Release `Cmd` | Paste selected item |
 
@@ -84,11 +85,13 @@ ClipFlow needs Accessibility access for global hotkeys:
 
 - 📋 **Clipboard History** - Saves last 50 copies (text + images)
 - ⌨️ **Terminal-style Navigation** - Use ↑↓ like shell history
+- 🗑️ **Delete Items** - Remove unwanted items with `Cmd+Shift+Delete`
+- 🔄 **Recently Used First** - Pasted items move to top of list
 - 🖼️ **Image Previews** - See thumbnails in popup
-- 🎯 **Cursor-following** - Popup appears at your mouse
-- 🔄 **Dynamic Resize** - Smooth animations
+- 🎯 **Cursor-following** - Popup appears above your cursor
 - 🖥️ **Multi-Monitor** - Works across displays
 - 🚫 **Non-focusable** - Doesn't interrupt typing
+- ✨ **Polished UI** - Smooth animations, eye-friendly dark theme
 
 ---
 
